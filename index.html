@@ -141,6 +141,29 @@
   <button type="button" id="reset-seesaw">
     シーソーをリセット
   </button>
+<div class="share-section">
+  <h3>測定結果を共有</h3>
+  <p>シーソーの実験結果をカード画像にして、Xで共有しよう。</p>
+
+  <button type="button" id="generate-share-card">
+    結果カードを作成
+  </button>
+
+  <div id="share-card-preview">
+    <canvas id="share-card-canvas" width="1200" height="630"
+      hidden></canvas>
+  </div>
+
+  <button type="button" id="download-share-card" disabled>
+    画像を保存
+  </button>
+
+  <button type="button" id="share-to-x" disabled>
+    Xで共有
+  </button>
+
+  <p id="share-status" aria-live="polite"></p>
+</div>
 </section>
 
 

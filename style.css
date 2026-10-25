@@ -932,3 +932,46 @@ dialog::backdrop {
   text-align: center;
   color: #827767;
 }
+/* ===== 測定結果共有カード ===== */
+.share-section {
+  margin: 24px 0;
+  padding: 20px;
+  border: 1px solid #c8c8c8;
+  border-radius: 12px;
+  background: #f5f3ed;
+  color: #252525;
+}
+
+.share-section h3 {
+  margin-top: 0;
+}
+
+#share-card-preview {
+  margin: 16px 0;
+}
+
+#share-card-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid #c8c8c8;
+  border-radius: 8px;
+}
+
+#share-card-canvas[hidden] {
+  display: none;
+}
+
+.share-section button {
+  margin: 6px 6px 6px 0;
+}
+
+.share-section button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+#share-status {
+  overflow-wrap: anywhere;
+  font-size: 0.9rem;
+}

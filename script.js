@@ -988,3 +988,172 @@ function renderNearestDietProduct() {
 
   display.append(heading, name, weight, difference);
 }
+
+/* ===== 測定結果共有カード ===== */
+const shareGenerateButton = document.getElementById("generate-share-card");
+const shareDownloadButton = document.getElementById("download-share-card");
+const shareXButton = document.getElementById("share-to-x");
+const shareCanvas = document.getElementById("share-card-canvas");
+const sharePreview = document.getElementById("share-card-preview");
+const shareStatus = document.getElementById("share-status");
+
+let shareCardDataUrl = "";
+
+function createShareCard() {
+  if (!shareCanvas || !sharePreview) return;
+
+  const ctx = shareCanvas.getContext("2d");
+  if (!ctx) return;
+
+  const width = shareCanvas.width;
+  const height = shareCanvas.height;
+  const left = seesawItems.left;
+  const right = seesawItems.right;
+
+  const leftWeight = left.reduce(
+    (sum, item) => sum + item.weightGrams, 0
+  );
+  const rightWeight = right.reduce(
+    (sum, item) => sum + item.weightGrams, 0
+  );
+  const difference = leftWeight - rightWeight;
+
+  ctx.fillStyle = "#f1eee5";
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.fillStyle = "#252a30";
+  ctx.fillRect(0, 0, width, 18);
+
+  ctx.fillStyle = "#252a30";
+  ctx.font = "bold 38px sans-serif";
+  ctx.fillText("電協重量測定研究所", 60, 85);
+
+  ctx.fillStyle = "#68665f";
+  ctx.font = "20px sans-serif";
+  ctx.fillText("MEASUREMENT REPORT", 60, 125);
+
+  ctx.strokeStyle = "#b7b2a6";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(60, 155);
+  ctx.lineTo(width - 60, 155);
+  ctx.stroke();
+
+  function drawSide(items, total, label, x) {
+    ctx.fillStyle = "#68665f";
+    ctx.font = "bold 24px sans-serif";
+    ctx.fillText(label, x, 205);
+
+    ctx.fillStyle = "#252a30";
+    ctx.font = "bold 42px sans-serif";
+    ctx.fillText(`${total.toLocaleString("ja-JP")} g`, x, 265);
+
+    ctx.font = "20px sans-serif";
+    const maxItems = 5;
+
+    items.slice(0, maxItems).forEach((item, index) => {
+      const text = `${item.name}: ${item.weightGrams.toLocaleString("ja-JP")} g`;
+      ctx.fillText(text.slice(0, 32), x, 315 + index * 36);
+    });
+
+    if (items.length > maxItems) {
+      ctx.fillText(`ほか ${items.length - maxItems} 点`, x, 315 + maxItems * 36);
+    }
+
+    if (items.length === 0) {
+      ctx.fillStyle = "#888888";
+      ctx.fillText("製品なし", x, 315);
+    }
+  }
+
+  drawSide(left, leftWeight, "LEFT", 60);
+  drawSide(right, rightWeight, "RIGHT", 630);
+
+  ctx.strokeStyle = "#b7b2a6";
+  ctx.beginPath();
+  ctx.moveTo(600, 185);
+  ctx.lineTo(600, 515);
+  ctx.stroke();
+
+  ctx.fillStyle = "#252a30";
+  ctx.font = "bold 26px sans-serif";
+  const result = difference === 0
+    ? "左右ぴったり同じ重量！"
+    : `${difference > 0 ? "左側" : "右側"}が ${Math.abs(difference).toLocaleString("ja-JP")} g 重い！`;
+
+  ctx.fillText(result.slice(0, 38), 60, 555);
+
+  ctx.fillStyle = "#68665f";
+  ctx.font = "18px sans-serif";
+  ctx.fillText("DENKYO WEIGHT LAB", 60, 605);
+
+  shareCardDataUrl = shareCanvas.toDataURL("image/png");
+
+  let previewImage = sharePreview.querySelector("img");
+  if (!previewImage) {
+    previewImage = document.createElement("img");
+    previewImage.alt = "シーソー実験の測定結果カード";
+    sharePreview.appendChild(previewImage);
+  }
+  previewImage.src = shareCardDataUrl;
+
+  if (shareDownloadButton) shareDownloadButton.disabled = false;
+  if (shareXButton) shareXButton.disabled = false;
+
+  if (shareStatus) {
+    shareStatus.textContent = "カードを作成しました！画像を保存してXで共有できます。";
+  }
+}
+
+if (shareGenerateButton) {
+  shareGenerateButton.addEventListener("click", createShareCard);
+}
+
+if (shareDownloadButton) {
+  shareDownloadButton.addEventListener("click", () => {
+    if (!shareCardDataUrl) return;
+
+    const link = document.createElement("a");
+    link.href = shareCardDataUrl;
+    link.download = "denkyo-measurement-result.png";
+    link.click();
+  });
+}
+
+if (shareXButton) {
+  shareXButton.addEventListener("click", () => {
+    if (!shareCardDataUrl) return;
+
+    const leftWeight = seesawItems.left.reduce(
+      (sum, item) => sum + item.weightGrams, 0
+    );
+    const rightWeight = seesawItems.right.reduce(
+      (sum, item) => sum + item.weightGrams, 0
+    );
+
+    const formatItems = items => items.length
+      ? items.map(item => `${item.name} ${item.weightGrams.toLocaleString("ja-JP")}g`).join("、")
+      : "なし";
+
+    const postText = [
+      "【電協重量測定研究所・シーソー実験結果】",
+      `左側：${formatItems(seesawItems.left)}`,
+      `左側合計：${leftWeight.toLocaleString("ja-JP")} g`,
+      `右側：${formatItems(seesawItems.right)}`,
+      `右側合計：${rightWeight.toLocaleString("ja-JP")} g`,
+      "",
+      "#明和電機 #電協重量測定研究所",
+      "https://plumless-comet.github.io/denkyo-weight-lab/"
+    ].join("\n");
+
+    const intentUrl = "https://twitter.com/intent/tweet?text="
+      + encodeURIComponent(postText);
+
+    window.open(intentUrl, "_blank", "noopener,noreferrer");
+
+    if (shareStatus) {
+      shareStatus.textContent =
+        "Xの投稿画面を開きました。保存したPNG画像を投稿に添付してね！";
+    }
+  });
+}
