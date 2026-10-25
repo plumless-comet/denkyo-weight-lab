@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>電協重量測定研究所</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    
+
+    <p class="lab-label">WEIGHT MEASUREMENT LABORATORY</p>
+    <h1>電協<br>重量測定研究所</h1>
+    <p>明和電機製品の重量を調査・記録する研究所</p>
+  </header>
+
+<section class="weight-search">
+  <h2>あなたの重さに近い製品は？</h2>
+  <p>猫ちゃんでも、ぬいぐるみでも、自分自身でも。</p>
+
+  <form id="weight-search-form">
+    <label for="weight-input">比較したい重さ</label>
+    <div class="weight-input-row">
+      <input
+        id="weight-input"
+        type="number"
+        min="0.001"
+        step="any"
+        placeholder="例：4.2"
+        required
+      >
+
+      <select id="weight-unit" aria-label="重さの単位">
+        <option value="kg">kg</option>
+        <option value="g">g</option>
+      </select>
+
+      <button type="submit">比較する</button>
+    </div>
+  </form>
+
+  <div id="weight-results" aria-live="polite"></div>
+</section>
+
+
+
+<section class="seesaw-section" id="seesaw-lab">
+  <h2>シーソー実験装置</h2>
+  <p>製品を乗せて、左右の重量を比較しよう。</p>
+
+  <div class="seesaw-controls">
+    <!-- 左側 -->
+    <div class="seesaw-side">
+      <h3>左側のプレート</h3>
+
+      <label for="left-product-select">乗せる製品</label>
+      <select id="left-product-select">
+        <option value="">製品を読み込み中...</option>
+      </select>
+
+      <button type="button" id="add-left-product">
+        左側に乗せる
+      </button>
+
+      <ul id="left-product-list"></ul>
+      <p>合計：<strong id="left-total">0 g</strong></p>
+
+      <div class="custom-weight-controls">
+       <label for="custom-name">自由重量の名前</label>
+<input type="text" id="custom-name" placeholder="例：社長のメガネ">
+
+<label for="custom-image">自由重量の画像</label>
+<input
+  type="file"
+  id="custom-image"
+  accept="image/*"
+>
+<p class="input-note">好きな画像を選んでね（画像なしでもOK）</p>
+
+<label for="custom-weight">自由に重さを入力（g）</label>
+<input
+  type="number"
+  id="custom-weight"
+  min="1"
+  step="any"
+  placeholder="例：20"
+>
+        >
+        <button type="button" id="add-custom-left">
+          入力した重さを左側に乗せる
+        </button>
+      </div>
+    </div>
+
+    <!-- 右側 -->
+    <div class="seesaw-side">
+      <h3>右側のプレート</h3>
+
+      <label for="right-product-select">乗せる製品</label>
+      <select id="right-product-select">
+        <option value="">製品を読み込み中...</option>
+      </select>
+
+      <button type="button" id="add-right-product">
+        右側に乗せる
+      </button>
+
+      <ul id="right-product-list"></ul>
+      <p>合計：<strong id="right-total">0 g</strong></p>
+
+      <button type="button" id="add-custom-right">
+        入力した重さを右側に乗せる
+      </button>
+    </div>
+  </div>
+
+  <!-- シーソー本体 -->
+  <div class="seesaw-stage" id="seesaw-stage">
+    <div class="seesaw-beam" id="seesaw-beam">
+      <div class="seesaw-platform left-platform">
+        <div id="left-items" class="seesaw-items"></div>
+      </div>
+
+      <div class="seesaw-platform right-platform">
+        <div id="right-items" class="seesaw-items"></div>
+      </div>
+    </div>
+
+    <div class="seesaw-fulcrum"></div>
+  </div>
+
+  <p id="seesaw-message" aria-live="polite">
+    製品を乗せて実験を始めよう！
+  </p>
+
+  <p class="seesaw-disclaimer">
+    ※飛んでいっても重量が残るのは仕様です。
+  </p>
+
+  <button type="button" id="reset-seesaw">
+    シーソーをリセット
+  </button>
+</section>
+
+
+    
+
+
+
+  <main>
+    <section class="intro">
+      <p class="section-label">WELCOME, RESEARCHER</p>
+      <h2>🔬 重量図鑑</h2>
+      <p>製品を選択すると、詳細な研究データを確認できます。</p>
+    </section>
+
+    <div class="catalog-heading">
+      <h2>製品データベース</h2>
+      <span id="product-count">0 ITEMS</span>
+    </div>
+
+    <div class="filters" id="series-filters">
+      <button class="filter-button active" data-series="すべて">すべて</button>
+      <button class="filter-button" data-series="魚器">魚器</button>
+      <button class="filter-button" data-series="ツクバ">ツクバ</button>
+      <button class="filter-button" data-series="エーデルワイス">エーデルワイス</button>
+      <button class="filter-button" data-series="TOY">TOY</button>
+      <button class="filter-button" data-series="ボイスメカニクス">ボイスメカニクス</button>
+    </div>
+
+    
+<section class="weight-search">
+  <h2>あなたの重さに近い製品は？</h2>
+  <p>猫ちゃんでも、ぬいぐるみでも、自分自身でも。</p>
+
+  <form id="weight-search-form">
+    <label for="weight-input">比較したい重さ</label>
+
+    <div class="weight-input-row">
+      <input
+        id="weight-input"
+        type="number"
+        min="0.001"
+        step="any"
+        placeholder="例：4.2"
+        required
+      >
+
+      <select id="weight-unit" aria-label="重さの単位">
+        <option value="kg">kg</option>
+        <option value="g">g</option>
+      </select>
+
+      <button type="submit">比較する</button>
+    </div>
+  </form>
+
+  <div id="weight-results" aria-live="polite"></div>
+</section>
+
+
+    <div class="product-grid" id="product-grid"></div>
+
+    <section class="notice">
+      <h2>📐 研究ノート</h2>
+      <p>重量は公式資料などの出典を確認して掲載します。未確認の数値は、公式データとして扱いません。</p>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button>⌂<br>ホーム</button>
+    <button class="selected">⚖️<br>重量図鑑</button>
+    <button>📈<br>減量合計</button>
+    <button>👤<br>マイページ</button>
+  </nav>
+
+
+<section class="diet-section" id="diet-record">
+  <h2>⚖️ みんなの減量合計</h2>
+
+  <p id="diet-total">読み込み中...</p>
+
+  <div id="diet-nearest-product">
+    製品を探しています...
+  </div>
+
+  <a
+    href="https://docs.google.com/forms/d/e/1FAIpQLSdWXuhNa90DoLkS5RbHflHjh8cWz3Q2okErNgvVdOvxvbHbVQ/viewform?usp=sharing&ouid=114414155933856349476"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="diet-form-link"
+  >
+    減量を記録して参加する！
+  </a>
+</section>
+
+
+  
+
+  <dialog id="product-dialog">
+    <button class="dialog-close" id="dialog-close" aria-label="閉じる">×</button>
+    <p class="section-label">PRODUCT SPECIFICATION</p>
+    
+<dialog id="product-dialog">
+  <button class="dialog-close" id="dialog-close" aria-label="閉じる">×</button>
+  <p class="section-label">PRODUCT SPECIFICATION</p>
+
+  <!-- 製品画像 -->
+  <div class="detail-image" id="detail-image"></div>
+
+  <p class="detail-series" id="detail-series"></p>
+  <h2 id="detail-name"></h2>
+  <div class="detail-weight" id="detail-weight"></div>
+  <p id="detail-description"></p>
+  <p class="source-note" id="detail-source"></p>
+</dialog>
+
+    <p class="detail-series" id="detail-series"></p>
+    <h2 id="detail-name"></h2>
+    <div class="detail-weight" id="detail-weight"></div>
+    <p id="detail-description"></p>
+    <p class="source-note" id="detail-source"></p>
+  </dialog>
+
+<script type="module" src="script.js"></script>
+  
+<footer class="site-footer">
+  <p>本サイトはファンによる非公式の個人制作サイトです。明和電機および公式関係者とは一切関係ありません。</p>
+</footer>
+
+<section class="weight-search">
+  <h2>あなたの重さに近い製品は？</h2>
+  <p>猫ちゃんでも、ぬいぐるみでも、自分自身でも。</p>
+
+  <form id="weight-search-form">
+    <label for="weight-input">比較したい重さ</label>
+    <div class="weight-input-row">
+      <input
+        id="weight-input"
+        type="number"
+        min="0.001"
+        step="any"
+        placeholder="例：4.2"
+        required
+      >
+      <select id="weight-unit" aria-label="重さの単位">
+        <option value="kg">kg</option>
+        <option value="g">g</option>
+      </select>
+      <button type="submit">比較する</button>
+    </div>
+  </form>
+
+  <div id="weight-results" aria-live="polite"></div>
+</section>
+
+<footer class="site-footer">
+  <h2>電協重量測定研究所について</h2>
+
+  <p>
+    本サイトは個人が運営する非公式のファン制作サイトです。
+    株式会社明和電機様および関係者様とは一切関係ありません。
+  </p>
+
+  <p>
+    本サイトは予告なく内容を変更し、または閉鎖する場合があります。
+  </p>
+
+  <p>
+    掲載情報の正確性・完全性・最新性を保証するものではありません。
+    本サイトの利用により生じた損害について、法令上認められる範囲を超えて
+    責任を負うものではありません。
+  </p>
+
+  <h3>個人情報・入力情報について</h3>
+
+  <p>
+    本サイトから送信された情報は一般公開されません。
+    ただし、Googleフォームに入力された内容は管理者が閲覧する場合があります。
+    必要以上の個人情報や、他人に知られたくない情報は入力しないようお願いいたします。
+  </p>
+
+  <p>
+    減量記録は参加者全体の集計に使用します。
+    公開ページでは合計値を表示し、個別の記録やX（Twitter）IDを
+    公開しない方針です。
+  </p>
+
+  <h3>お問い合わせ</h3>
+
+  <p>
+    不具合・ご意見・お問い合わせは管理人のX（Twitter）まで！
+  </p>
+
+  <p>
+    <a href="https://x.com/Wasurepoi_" target="_blank"
+       rel="noopener noreferrer">@Wasurepoi_</a>
+  </p>
+
+  <hr>
+
+  <p>※社長に怒られるか、どつかれたらやめます。</p>
+
+  <p>※無理なダイエットは体に良くないですよ！
+    無理のないペースでゆっくりと。</p>
+
+  <p class="komachi-message">目指せコマチ！</p>
+
+  <small>© 電協重量測定研究所</small>
+</footer>
+
+</body>
+</html>
