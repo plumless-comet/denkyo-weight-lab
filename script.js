@@ -1142,7 +1142,7 @@ if (shareXButton) {
       `右側：${formatItems(seesawItems.right)}`,
       `右側合計：${rightWeight.toLocaleString("ja-JP")} g`,
       "",
-      "#明和電機 #電協重量測定研究所",
+      "#電協重量測定研究所",
       "https://plumless-comet.github.io/denkyo-weight-lab/"
     ].join("\n");
 
