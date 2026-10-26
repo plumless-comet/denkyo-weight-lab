@@ -1283,3 +1283,15 @@ if (shareDownloadButton) {
     }
   });
 }
+
+/* ===== Xで共有するボタン ===== */
+if (shareXButton) {
+  shareXButton.addEventListener("click", () => {
+    const text = "電協重量測定研究所でシーソー実験をしました！";
+    const url =
+      "https://twitter.com/intent/tweet?text=" +
+      encodeURIComponent(text);
+
+    window.location.href = url;
+  });
+}
