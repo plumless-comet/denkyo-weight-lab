@@ -1211,9 +1211,10 @@ if (shareGenerateButton) {
 }
 
 
+
 /* ===== 共有カードを保存するボタン ===== */
 if (shareDownloadButton) {
-  shareDownloadButton.addEventListener("click", () => {
+  shareDownloadButton.addEventListener("click", async () => {
     if (!shareCardDataUrl) {
       if (shareStatus) {
         shareStatus.textContent = "先に結果カードを作成してね！";
@@ -1221,64 +1222,55 @@ if (shareDownloadButton) {
       return;
     }
 
-    // スマホでも画像を直接開けるようにする
-    const newTab = window.open();
+    try {
+      // 共有カードのPNG画像をファイルに変換
+      const response = await fetch(shareCardDataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], "denkyo-weight-lab.png", {
+        type: "image/png"
+      });
 
-    if (newTab) {
-      newTab.document.write(`
-        <!DOCTYPE html>
-        <html lang="ja">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <title>測定結果カード</title>
-          <style>
-            body {
-              margin: 0;
-              padding: 12px;
-              background: #252a30;
-              text-align: center;
-            }
-            img {
-              display: block;
-              width: 100%;
-              height: auto;
-              margin: 0 auto;
-            }
-            p {
-              color: white;
-              font-family: sans-serif;
-            }
-          </style>
-        </head>
-        <body>
-          <p>画像を長押しして保存してね！</p>
-          <img src="${shareCardDataUrl}" alt="測定結果カード">
-        </body>
-        </html>
-      `);
-      newTab.document.close();
+      // Android Chromeなどで共有メニューを開く
+      if (
+        navigator.canShare &&
+        navigator.canShare({ files: [file] }) &&
+        navigator.share
+      ) {
+        await navigator.share({
+          files: [file],
+          title: "電協重量測定研究所",
+          text: "シーソー実験の測定結果！"
+        });
 
-      if (shareStatus) {
-        shareStatus.textContent =
-          "画像を開いたよ！画像を長押しして保存してね。";
+        if (shareStatus) {
+          shareStatus.textContent =
+            "共有メニューを開いたよ！保存先を選んでね。";
+        }
+      } else {
+        // 共有機能が使えない環境では画像を新しいタブで開く
+        const imageUrl = URL.createObjectURL(blob);
+        const newTab = window.open(imageUrl, "_blank");
+
+        if (shareStatus) {
+          shareStatus.textContent = newTab
+            ? "画像を開いたよ。画像を長押しして保存してね！"
+            : "ポップアップがブロックされたよ。プレビュー画像を長押しして保存してね！";
+        }
       }
-    } else {
+    } catch (error) {
+      if (error.name === "AbortError") {
+        if (shareStatus) {
+          shareStatus.textContent = "共有をキャンセルしたよ。";
+        }
+        return;
+      }
+
+      console.error("画像保存エラー:", error);
+
       if (shareStatus) {
         shareStatus.textContent =
-          "ポップアップがブロックされたよ。下の画像を長押ししてね！";
+          "保存できなかったよ。プレビュー画像を長押しして保存してね。";
       }
     }
-  });
-}
-
-/* ===== Xで共有するボタン ===== */
-if (shareXButton) {
-  shareXButton.addEventListener("click", () => {
-    const text = "電協重量測定研究所でシーソー実験をしました！";
-    const url = "https://twitter.com/intent/tweet?text=" +
-      encodeURIComponent(text);
-
-    window.open(url, "_blank", "noopener,noreferrer");
   });
 }
