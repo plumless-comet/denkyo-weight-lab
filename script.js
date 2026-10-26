@@ -1191,9 +1191,18 @@ async function createShareCard() {
     }
     previewImage.src = shareCardDataUrl;
 
-    if (shareStatus) {
-      shareStatus.textContent = "共有カードができたよ！";
-    }
+if (shareStatus) {
+  shareStatus.textContent = "共有カードができたよ！";
+}
+
+if (shareDownloadButton) {
+  shareDownloadButton.disabled = false;
+}
+
+if (shareXButton) {
+  shareXButton.disabled = false;
+}
+
 
   } catch (error) {
     console.error("共有カード作成エラー:", error);
