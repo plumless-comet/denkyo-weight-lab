@@ -1284,14 +1284,44 @@ if (shareDownloadButton) {
   });
 }
 
+
 /* ===== Xで共有するボタン ===== */
 if (shareXButton) {
   shareXButton.addEventListener("click", () => {
-    alert("Xボタンのクリック処理は動いているよ！");
-    const text = "電協重量測定研究所でシーソー実験をしました！";
+    const left = seesawItems.left;
+    const right = seesawItems.right;
+
+    const leftNames = left.length
+      ? left.map(item => item.name).join("、")
+      : "なし";
+
+    const rightNames = right.length
+      ? right.map(item => item.name).join("、")
+      : "なし";
+
+    const leftWeight = left.reduce(
+      (sum, item) => sum + item.weightGrams, 0
+    );
+
+    const rightWeight = right.reduce(
+      (sum, item) => sum + item.weightGrams, 0
+    );
+
+    const text =
+      `【電協重量測定研究所・シーソー実験結果】\n` +
+      `左側：${leftNames}\n` +
+      `左側合計：${leftWeight.toLocaleString("ja-JP")} g\n` +
+      `右側：${rightNames}\n` +
+      `右側合計：${rightWeight.toLocaleString("ja-JP")} g\n\n` +
+      `#電協重量測定研究所`;
+
+    const siteUrl = "https://plumless-comet.github.io/denkyo-weight-lab/";
+
     const url =
       "https://twitter.com/intent/tweet?text=" +
-      encodeURIComponent(text);
+      encodeURIComponent(text) +
+      "&url=" +
+      encodeURIComponent(siteUrl);
 
     window.location.href = url;
   });
