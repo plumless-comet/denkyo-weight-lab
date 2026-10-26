@@ -154,7 +154,7 @@ credit.textContent = product.credit
   ? `イラスト提供：${product.credit}`
   : "";
 
-    card.append(image, seriesLabel, name, weight, status,credit,);
+    card.append(image, seriesLabel, name, weight, credit,);
     card.addEventListener("click", () => showDetails(product));
 
     grid.appendChild(card);
@@ -1189,30 +1189,29 @@ async function createShareCard() {
       previewImage.alt = "シーソー実験の測定結果カード";
       sharePreview.appendChild(previewImage);
     }
-
     previewImage.src = shareCardDataUrl;
 
-    if (shareDownloadButton) shareDownloadButton.disabled = false;
-    if (shareXButton) shareXButton.disabled = false;
-
     if (shareStatus) {
-      shareStatus.textContent =
-        "カードができました！画像を保存してXで共有しよう！";
+      shareStatus.textContent = "共有カードができたよ！";
     }
+
   } catch (error) {
     console.error("共有カード作成エラー:", error);
 
     if (shareStatus) {
       shareStatus.textContent =
-        "カードの作成に失敗しました。コンソールを確認してね。";
+        "カードの作成に失敗しました。もう一度試してね！";
     }
   }
 }
 
+/* ===== 共有カードを作成するボタン ===== */
 if (shareGenerateButton) {
   shareGenerateButton.addEventListener("click", createShareCard);
 }
 
+
+/* ===== 共有カードを保存するボタン ===== */
 if (shareDownloadButton) {
   shareDownloadButton.addEventListener("click", () => {
     if (!shareCardDataUrl) {
@@ -1222,74 +1221,64 @@ if (shareDownloadButton) {
       return;
     }
 
-    shareCanvas.toBlob(blob => {
-      if (!blob) {
-        if (shareStatus) {
-          shareStatus.textContent = "画像の保存に失敗しました。";
-        }
-        return;
-      }
+    // スマホでも画像を直接開けるようにする
+    const newTab = window.open();
 
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-
-      link.href = url;
-      link.download = "denkyo-measurement-result.png";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    if (newTab) {
+      newTab.document.write(`
+        <!DOCTYPE html>
+        <html lang="ja">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>測定結果カード</title>
+          <style>
+            body {
+              margin: 0;
+              padding: 12px;
+              background: #252a30;
+              text-align: center;
+            }
+            img {
+              display: block;
+              width: 100%;
+              height: auto;
+              margin: 0 auto;
+            }
+            p {
+              color: white;
+              font-family: sans-serif;
+            }
+          </style>
+        </head>
+        <body>
+          <p>画像を長押しして保存してね！</p>
+          <img src="${shareCardDataUrl}" alt="測定結果カード">
+        </body>
+        </html>
+      `);
+      newTab.document.close();
 
       if (shareStatus) {
-        shareStatus.textContent = "画像の保存を開始しました！";
+        shareStatus.textContent =
+          "画像を開いたよ！画像を長押しして保存してね。";
       }
-    }, "image/png");
+    } else {
+      if (shareStatus) {
+        shareStatus.textContent =
+          "ポップアップがブロックされたよ。下の画像を長押ししてね！";
+      }
+    }
   });
 }
 
+/* ===== Xで共有するボタン ===== */
 if (shareXButton) {
   shareXButton.addEventListener("click", () => {
-    if (!shareCardDataUrl) {
-      if (shareStatus) {
-        shareStatus.textContent = "先に結果カードを作成してね！";
-      }
-      return;
-    }
+    const text = "電協重量測定研究所でシーソー実験をしました！";
+    const url = "https://twitter.com/intent/tweet?text=" +
+      encodeURIComponent(text);
 
-    const leftWeight = seesawItems.left.reduce(
-      (sum, item) => sum + item.weightGrams, 0
-    );
-    const rightWeight = seesawItems.right.reduce(
-      (sum, item) => sum + item.weightGrams, 0
-    );
-
-    const formatItems = items => items.length
-      ? items.map(item =>
-          `${item.name} ${item.weightGrams.toLocaleString("ja-JP")}g`
-        ).join("、")
-      : "なし";
-
-    const postText = [
-      "【電協重量測定研究所・シーソー実験結果】",
-      `左側：${formatItems(seesawItems.left)}`,
-      `左側合計：${leftWeight.toLocaleString("ja-JP")} g`,
-      `右側：${formatItems(seesawItems.right)}`,
-      `右側合計：${rightWeight.toLocaleString("ja-JP")} g`,
-      "",
-      "#電協重量測定研究所",
-      "https://plumless-comet.github.io/denkyo-weight-lab/"
-    ].join("\n");
-
-    const intentUrl =
-      "https://twitter.com/intent/tweet?text=" +
-      encodeURIComponent(postText);
-
-    window.open(intentUrl, "_blank", "noopener,noreferrer");
-
-    if (shareStatus) {
-      shareStatus.textContent =
-        "Xの投稿画面を開きました。保存したPNG画像を添付してね！";
-    }
+    window.open(url, "_blank", "noopener,noreferrer");
   });
 }
