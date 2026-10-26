@@ -1287,6 +1287,7 @@ if (shareDownloadButton) {
 /* ===== Xで共有するボタン ===== */
 if (shareXButton) {
   shareXButton.addEventListener("click", () => {
+    alert("Xボタンのクリック処理は動いているよ！");
     const text = "電協重量測定研究所でシーソー実験をしました！";
     const url =
       "https://twitter.com/intent/tweet?text=" +
