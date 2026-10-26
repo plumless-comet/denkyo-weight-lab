@@ -50,6 +50,27 @@ function parseCSV(text) {
 }
 
 
+/* ===== 共有カード用の画像読み込み ===== */
+function loadShareImage(filename) {
+  return new Promise(resolve => {
+    if (!filename) {
+      resolve(null);
+      return;
+    }
+
+    const img = new Image();
+
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+
+    if (filename.startsWith("data:image/")) {
+      img.src = filename;
+    } else {
+      img.src = `images/${filename}`;
+    }
+  });
+}
+
 /* ===== 画像を作る共通処理 ===== */
 function createProductImage(
   filename,
@@ -127,11 +148,13 @@ function renderProducts(series = "すべて") {
       ? `${product.weight} kg`
       : "重量未確認";
 
-    const status = document.createElement("div");
-    status.className = "product-status";
-    status.textContent = product.status;
+    const credit = document.createElement("div");
+credit.className = "product-credit";
+credit.textContent = product.credit
+  ? `イラスト提供：${product.credit}`
+  : "";
 
-    card.append(image, seriesLabel, name, weight, status);
+    card.append(image, seriesLabel, name, weight, status,credit,);
     card.addEventListener("click", () => showDetails(product));
 
     grid.appendChild(card);
@@ -310,9 +333,9 @@ function addProductToSide(side) {
     return;
   }
 
-  if (seesawItems[side].length >= 10) {
+  if (seesawItems[side].length >= 4) {
     if (seesawMessage) {
-      seesawMessage.textContent = "片側に乗せられるのは最大10個まで！";
+      seesawMessage.textContent = "片側に乗せられるのは最大4個まで！";
     }
     return;
   }
@@ -351,10 +374,10 @@ async function addCustomWeight(side) {
     return;
   }
 
-  if (seesawItems[side].length >= 10) {
+  if (seesawItems[side].length >= 4) {
     if (seesawMessage) {
       seesawMessage.textContent =
-        "片側に乗せられるのは最大10個まで！";
+        "片側に乗せられるのは最大4個まで！";
     }
     return;
   }
@@ -690,6 +713,7 @@ async function loadProducts() {
     const weightCol = column("重量(g)");
     const sourceCol = column("公式ソース");
     const imageCol = column("画像ファイル名");
+    const creditCol = column("イラスト提供者");
     const seriesCol = column("分類");
 
     if (nameCol === -1 || weightCol === -1 || seriesCol === -1) {
@@ -720,6 +744,7 @@ async function loadProducts() {
             ? `公式ソース：${get(sourceCol)}`
             : "",
           image: get(imageCol),
+          credit: get(creditCol),
           status: validWeight ? "重量登録済み" : "重量未確認",
           series: get(seriesCol),
           description: get(numberCol)
@@ -990,6 +1015,7 @@ function renderNearestDietProduct() {
 }
 
 /* ===== 測定結果共有カード ===== */
+/* ===== 測定結果共有カード ===== */
 const shareGenerateButton = document.getElementById("generate-share-card");
 const shareDownloadButton = document.getElementById("download-share-card");
 const shareXButton = document.getElementById("share-to-x");
@@ -999,14 +1025,16 @@ const shareStatus = document.getElementById("share-status");
 
 let shareCardDataUrl = "";
 
-function createShareCard() {
+async function createShareCard() {
   if (!shareCanvas || !sharePreview) return;
 
   const ctx = shareCanvas.getContext("2d");
   if (!ctx) return;
 
-  const width = shareCanvas.width;
-  const height = shareCanvas.height;
+  if (shareStatus) {
+    shareStatus.textContent = "画像を読み込んでいます…";
+  }
+
   const left = seesawItems.left;
   const right = seesawItems.right;
 
@@ -1018,90 +1046,166 @@ function createShareCard() {
   );
   const difference = leftWeight - rightWeight;
 
-  ctx.fillStyle = "#f1eee5";
-  ctx.fillRect(0, 0, width, height);
+  try {
+    const leftImages = await Promise.all(
+      left.slice(0, 3).map(item =>
+        loadShareImage(item.imageData || item.image)
+      )
+    );
 
-  ctx.fillStyle = "#252a30";
-  ctx.fillRect(0, 0, width, 18);
+    const rightImages = await Promise.all(
+      right.slice(0, 3).map(item =>
+        loadShareImage(item.imageData || item.image)
+      )
+    );
 
-  ctx.fillStyle = "#252a30";
-  ctx.font = "bold 38px sans-serif";
-  ctx.fillText("電協重量測定研究所", 60, 85);
+    // 大きな画像を見せるため、カードを縦長にする
+    shareCanvas.width = 1200;
+    shareCanvas.height = 1200;
 
-  ctx.fillStyle = "#68665f";
-  ctx.font = "20px sans-serif";
-  ctx.fillText("MEASUREMENT REPORT", 60, 125);
-
-  ctx.strokeStyle = "#b7b2a6";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(60, 155);
-  ctx.lineTo(width - 60, 155);
-  ctx.stroke();
-
-  function drawSide(items, total, label, x) {
-    ctx.fillStyle = "#68665f";
-    ctx.font = "bold 24px sans-serif";
-    ctx.fillText(label, x, 205);
+    ctx.fillStyle = "#f1eee5";
+    ctx.fillRect(0, 0, 1200, 1200);
 
     ctx.fillStyle = "#252a30";
-    ctx.font = "bold 42px sans-serif";
-    ctx.fillText(`${total.toLocaleString("ja-JP")} g`, x, 265);
+    ctx.fillRect(0, 0, 1200, 18);
 
+    ctx.fillStyle = "#252a30";
+    ctx.font = "bold 38px sans-serif";
+    ctx.fillText("電協重量測定研究所", 50, 70);
+
+    ctx.fillStyle = "#68665f";
     ctx.font = "20px sans-serif";
-    const maxItems = 5;
+    ctx.fillText("MEASUREMENT REPORT", 50, 105);
 
-    items.slice(0, maxItems).forEach((item, index) => {
-      const text = `${item.name}: ${item.weightGrams.toLocaleString("ja-JP")} g`;
-      ctx.fillText(text.slice(0, 32), x, 315 + index * 36);
-    });
+    ctx.strokeStyle = "#b7b2a6";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(50, 130);
+    ctx.lineTo(1150, 130);
+    ctx.stroke();
 
-    if (items.length > maxItems) {
-      ctx.fillText(`ほか ${items.length - maxItems} 点`, x, 315 + maxItems * 36);
+    function drawSide(items, images, total, label, x) {
+      ctx.fillStyle = "#68665f";
+      ctx.font = "bold 26px sans-serif";
+      ctx.fillText(label, x, 175);
+
+      ctx.fillStyle = "#252a30";
+      ctx.font = "bold 40px sans-serif";
+      ctx.fillText(
+        `${total.toLocaleString("ja-JP")} g`,
+        x,
+        225
+      );
+
+      if (items.length === 0) {
+        ctx.fillStyle = "#888888";
+        ctx.font = "24px sans-serif";
+        ctx.fillText("製品なし", x, 290);
+        return;
+      }
+
+      items.slice(0, 3).forEach((item, index) => {
+        const y = 250 + index * 270;
+        const img = images[index];
+        const imageWidth = 300;
+        const imageHeight = 200;
+
+        // 大きな画像枠
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(x, y, imageWidth, imageHeight);
+
+        if (img) {
+          const scale = Math.min(
+            imageWidth / img.width,
+            imageHeight / img.height
+          );
+
+          const drawWidth = img.width * scale;
+          const drawHeight = img.height * scale;
+
+          ctx.drawImage(
+            img,
+            x + (imageWidth - drawWidth) / 2,
+            y + (imageHeight - drawHeight) / 2,
+            drawWidth,
+            drawHeight
+          );
+        } else {
+          ctx.fillStyle = "#888888";
+          ctx.font = "40px sans-serif";
+          ctx.fillText("⚙", x + 125, y + 115);
+        }
+
+        // 画像の下に製品名
+        ctx.fillStyle = "#252a30";
+        ctx.font = "bold 25px sans-serif";
+
+        const name = item.name || "名称未設定";
+        const displayName =
+          name.length > 20 ? name.slice(0, 19) + "…" : name;
+
+        ctx.fillText(displayName, x, y + 235);
+      });
+
+      if (items.length > 3) {
+        ctx.fillStyle = "#68665f";
+        ctx.font = "20px sans-serif";
+        ctx.fillText(`ほか ${items.length - 3} 点`, x, 1065);
+      }
     }
 
-    if (items.length === 0) {
-      ctx.fillStyle = "#888888";
-      ctx.fillText("製品なし", x, 315);
+    drawSide(left, leftImages, leftWeight, "LEFT", 50);
+    drawSide(right, rightImages, rightWeight, "RIGHT", 650);
+
+    // 左右の仕切り
+    ctx.strokeStyle = "#b7b2a6";
+    ctx.beginPath();
+    ctx.moveTo(600, 155);
+    ctx.lineTo(600, 1050);
+    ctx.stroke();
+
+    // 結果
+    ctx.fillStyle = "#252a30";
+    ctx.font = "bold 27px sans-serif";
+
+    const result = difference === 0
+      ? "左右ぴったり同じ重量！"
+      : `${difference > 0 ? "左側" : "右側"}が ${
+          Math.abs(difference).toLocaleString("ja-JP")
+        } g 重い！`;
+
+    ctx.fillText(result, 50, 1120);
+
+    ctx.fillStyle = "#68665f";
+    ctx.font = "18px sans-serif";
+    ctx.fillText("DENKYO WEIGHT LAB", 50, 1165);
+
+    shareCardDataUrl = shareCanvas.toDataURL("image/png");
+
+    let previewImage = sharePreview.querySelector("img");
+
+    if (!previewImage) {
+      previewImage = document.createElement("img");
+      previewImage.alt = "シーソー実験の測定結果カード";
+      sharePreview.appendChild(previewImage);
     }
-  }
 
-  drawSide(left, leftWeight, "LEFT", 60);
-  drawSide(right, rightWeight, "RIGHT", 630);
+    previewImage.src = shareCardDataUrl;
 
-  ctx.strokeStyle = "#b7b2a6";
-  ctx.beginPath();
-  ctx.moveTo(600, 185);
-  ctx.lineTo(600, 515);
-  ctx.stroke();
+    if (shareDownloadButton) shareDownloadButton.disabled = false;
+    if (shareXButton) shareXButton.disabled = false;
 
-  ctx.fillStyle = "#252a30";
-  ctx.font = "bold 26px sans-serif";
-  const result = difference === 0
-    ? "左右ぴったり同じ重量！"
-    : `${difference > 0 ? "左側" : "右側"}が ${Math.abs(difference).toLocaleString("ja-JP")} g 重い！`;
+    if (shareStatus) {
+      shareStatus.textContent =
+        "カードができました！画像を保存してXで共有しよう！";
+    }
+  } catch (error) {
+    console.error("共有カード作成エラー:", error);
 
-  ctx.fillText(result.slice(0, 38), 60, 555);
-
-  ctx.fillStyle = "#68665f";
-  ctx.font = "18px sans-serif";
-  ctx.fillText("DENKYO WEIGHT LAB", 60, 605);
-
-  shareCardDataUrl = shareCanvas.toDataURL("image/png");
-
-  let previewImage = sharePreview.querySelector("img");
-  if (!previewImage) {
-    previewImage = document.createElement("img");
-    previewImage.alt = "シーソー実験の測定結果カード";
-    sharePreview.appendChild(previewImage);
-  }
-  previewImage.src = shareCardDataUrl;
-
-  if (shareDownloadButton) shareDownloadButton.disabled = false;
-  if (shareXButton) shareXButton.disabled = false;
-
-  if (shareStatus) {
-    shareStatus.textContent = "カードを作成しました！画像を保存してXで共有できます。";
+    if (shareStatus) {
+      shareStatus.textContent =
+        "カードの作成に失敗しました。コンソールを確認してね。";
+    }
   }
 }
 
@@ -1111,18 +1215,47 @@ if (shareGenerateButton) {
 
 if (shareDownloadButton) {
   shareDownloadButton.addEventListener("click", () => {
-    if (!shareCardDataUrl) return;
+    if (!shareCardDataUrl) {
+      if (shareStatus) {
+        shareStatus.textContent = "先に結果カードを作成してね！";
+      }
+      return;
+    }
 
-    const link = document.createElement("a");
-    link.href = shareCardDataUrl;
-    link.download = "denkyo-measurement-result.png";
-    link.click();
+    shareCanvas.toBlob(blob => {
+      if (!blob) {
+        if (shareStatus) {
+          shareStatus.textContent = "画像の保存に失敗しました。";
+        }
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "denkyo-measurement-result.png";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      if (shareStatus) {
+        shareStatus.textContent = "画像の保存を開始しました！";
+      }
+    }, "image/png");
   });
 }
 
 if (shareXButton) {
   shareXButton.addEventListener("click", () => {
-    if (!shareCardDataUrl) return;
+    if (!shareCardDataUrl) {
+      if (shareStatus) {
+        shareStatus.textContent = "先に結果カードを作成してね！";
+      }
+      return;
+    }
 
     const leftWeight = seesawItems.left.reduce(
       (sum, item) => sum + item.weightGrams, 0
@@ -1132,7 +1265,9 @@ if (shareXButton) {
     );
 
     const formatItems = items => items.length
-      ? items.map(item => `${item.name} ${item.weightGrams.toLocaleString("ja-JP")}g`).join("、")
+      ? items.map(item =>
+          `${item.name} ${item.weightGrams.toLocaleString("ja-JP")}g`
+        ).join("、")
       : "なし";
 
     const postText = [
@@ -1146,14 +1281,15 @@ if (shareXButton) {
       "https://plumless-comet.github.io/denkyo-weight-lab/"
     ].join("\n");
 
-    const intentUrl = "https://twitter.com/intent/tweet?text="
-      + encodeURIComponent(postText);
+    const intentUrl =
+      "https://twitter.com/intent/tweet?text=" +
+      encodeURIComponent(postText);
 
     window.open(intentUrl, "_blank", "noopener,noreferrer");
 
     if (shareStatus) {
       shareStatus.textContent =
-        "Xの投稿画面を開きました。保存したPNG画像を投稿に添付してね！";
+        "Xの投稿画面を開きました。保存したPNG画像を添付してね！";
     }
   });
 }
